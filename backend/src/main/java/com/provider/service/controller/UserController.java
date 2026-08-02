@@ -32,8 +32,7 @@ public class UserController {
         d.setId(e.getId());
         d.setName(e.getName());
         d.setEmail(e.getEmail());
-        d.setRole("ADMIN");
-        // d.setRole(e.getRole());
+        d.setRole(e.getRole());
         d.setServiceType(e.getServiceType());
         d.setPincode(e.getPincode());
         d.setAddress(e.getAddress());
