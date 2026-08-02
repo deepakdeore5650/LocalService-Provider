@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send } from 'lucide-react'
-import axios from 'axios'
+import { MessageCircle, X, Send, Loader2 } from 'lucide-react'
+import api from '../api/api'
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,11 +25,12 @@ const ChatBot = () => {
     setLoading(true)
 
     try {
-      const res = await axios.post('http://localhost:7373/api/chat', { message: input })
-      const reply = { id: messages.length + 2, text: res.data.reply, sender: 'bot', time: new Date() }
+      const res = await api.post('/api/chat', { message: input })
+      const reply = { id: messages.length + 2, text: res.data?.reply || 'No response received.', sender: 'bot', time: new Date() }
       setMessages(prev => [...prev, reply])
     } catch (err) {
-      const error = { id: messages.length + 2, text: 'Error: ' + err.message, sender: 'bot', time: new Date() }
+      const detail = err.response?.data?.error || err.response?.data || err.message || 'Unable to reach the AI assistant.'
+      const error = { id: messages.length + 2, text: `Error: ${String(detail)}`, sender: 'bot', time: new Date() }
       setMessages(prev => [...prev, error])
     } finally {
       setLoading(false)
@@ -40,44 +41,52 @@ const ChatBot = () => {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg z-40"
+        className="btn-primary btn-ripple fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-glow transition-transform duration-300 hover:-translate-y-0.5"
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-20 right-6 w-96 bg-white rounded-lg shadow-2xl flex flex-col z-50 max-h-96">
-          <div className="bg-blue-600 text-white px-6 py-4 rounded-t-lg">
-            <h3 className="font-semibold text-lg">AI Assistant</h3>
-            <p className="text-sm text-blue-100">Gemini Powered</p>
+        <div className="glass-strong fixed bottom-24 right-6 z-50 flex max-h-[28rem] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl shadow-glow">
+          <div className="btn-primary px-6 py-4">
+            <h3 className="font-display text-base font-semibold text-white">AI Assistant</h3>
+            <p className="text-xs text-white/70">Gemini Powered</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+          <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.map(msg => (
               <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs px-3 py-2 rounded-lg ${
-                  msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-800'
+                <div className={`max-w-xs rounded-2xl px-3.5 py-2 ${
+                  msg.sender === 'user' ? 'btn-primary text-white' : 'bg-white/10 text-gray-100'
                 }`}>
                   <p className="text-sm">{msg.text}</p>
-                  <span className="text-xs opacity-70">{msg.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-[10px] opacity-60">{msg.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               </div>
             ))}
-            {loading && <div className="text-center text-gray-500">Loading...</div>}
+            {loading && (
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+                <Loader2 className="h-4 w-4 animate-spin" /> Thinking…
+              </div>
+            )}
             <div ref={endRef} />
           </div>
 
-          <form onSubmit={send} className="border-t p-3 flex gap-2 bg-white rounded-b-lg">
+          <form onSubmit={send} className="flex gap-2 border-t border-white/10 p-3">
             <input
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Ask something..."
               disabled={loading}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="input-glass flex-1 rounded-xl px-3.5 py-2 text-sm"
             />
-            <button type="submit" disabled={loading || !input.trim()} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">
-              <Send size={18} />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className="btn-primary flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-white transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Send size={16} />
             </button>
           </form>
         </div>

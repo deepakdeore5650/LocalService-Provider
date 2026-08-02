@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: 'http://localhost:7373' })
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8089'
+const api = axios.create({ baseURL: baseUrl })
 
 async function run(){
   try{

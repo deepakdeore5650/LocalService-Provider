@@ -4,54 +4,50 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
+import { UserPlus, Loader2 } from 'lucide-react'
+import Reveal from '../components/home/Reveal'
+
+const inputClass = 'input-glass w-full rounded-xl px-4 py-2.5 text-sm'
+const labelClass = 'mb-1.5 block text-sm font-medium text-gray-300'
 
 export default function Register() {
   const [form, setForm] = useState({
-  name: '',
-  email: '',
-  password: '',
-  role: 'USER',
-  address: '',
-  district: '',
-  phoneNo: '',       // must be phoneNo
-  pincode: '',       // must be pincode
-  serviceType: '',   // old field kept for compatibility
-  // provider service details
-  serviceName: '',
-  serviceDescription: '',
-  pricingPerHour: '',
-  serviceStatus: 'AVAILABLE',
-  state: ''
-});
-
-
+    name: '',
+    email: '',
+    password: '',
+    role: 'USER',
+    address: '',
+    district: '',
+    phoneNo: '',
+    pincode: '',
+    serviceType: '',
+    serviceName: '',
+    serviceDescription: '',
+    pricingPerHour: '',
+    serviceStatus: 'AVAILABLE',
+    state: ''
+  })
+  const [submitting, setSubmitting] = useState(false)
 
   const { login } = useAuth()
   const navigate = useNavigate()
 
   const submit = async (e) => {
     e.preventDefault()
-    // client-side validation
     const phoneRe = /^\d{10}$/
     const pinRe = /^\d{6}$/
-  // presence checks
-  if(!form.name) { toast.error('Name is required'); return }
-  if(!form.email) { toast.error('Email is required'); return }
-  if(!form.password) { toast.error('Password is required'); return }
-  if(form.role === 'USER' && !form.address) { toast.error('Address is required for users'); return }
-    if (form.phoneNo && !phoneRe.test(form.phoneNo)) {
-      toast.error('Phone number must be 10 digits')
-      return
-    }
-    if (form.pincode && !pinRe.test(form.pincode)) {
-      toast.error('Pincode must be 6 digits')
-      return
-    }
+    if (!form.name) { toast.error('Name is required'); return }
+    if (!form.email) { toast.error('Email is required'); return }
+    if (!form.password) { toast.error('Password is required'); return }
+    if (form.role === 'USER' && !form.address) { toast.error('Address is required for users'); return }
+    if (form.phoneNo && !phoneRe.test(form.phoneNo)) { toast.error('Phone number must be 10 digits'); return }
+    if (form.pincode && !pinRe.test(form.pincode)) { toast.error('Pincode must be 6 digits'); return }
     if (form.role === 'PROVIDER') {
       if (!form.serviceType && !form.serviceName) { toast.error('Service name or type is required for providers'); return }
       if (!form.state) { toast.error('State is required for providers'); return }
       if (!form.pricingPerHour) { toast.error('Pricing per hour is required for providers'); return }
     }
+    setSubmitting(true)
     try {
       const payload = { ...form }
       if (form.role !== 'PROVIDER') {
@@ -67,91 +63,96 @@ export default function Register() {
       else navigate('/user/dashboard')
     } catch (err) {
       toast.error(err.response?.data || 'Registration failed')
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-300 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg">
-        <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
-          Create Your Account
-        </h2>
+    <div className="app-bg relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-16">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-grid opacity-60" />
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary-600/25 blur-3xl animate-blob" />
+        <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-accent-500/15 blur-3xl animate-blob [animation-delay:3s]" />
+      </div>
 
-  <form onSubmit={submit} className="space-y-4" noValidate>
-          {/* Name */}
+      <Reveal scale className="glass-strong relative w-full max-w-lg rounded-2xl p-8 shadow-glow">
+        <div className="btn-primary mx-auto flex h-12 w-12 items-center justify-center rounded-2xl">
+          <UserPlus className="h-5 w-5 text-white" />
+        </div>
+        <h2 className="mt-5 text-center font-display text-2xl font-bold text-white">Create your account</h2>
+        <p className="mt-2 text-center text-sm text-gray-400">Join Local Guardian as a homeowner or a service provider</p>
+
+        <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Name</label>
+            <label className={labelClass}>Name</label>
             <input
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               placeholder="Enter your full name"
-              className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass}
             />
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Email</label>
+            <label className={labelClass}>Email</label>
             <input
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
               placeholder="Enter your email"
               type="email"
-              className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass}
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Password</label>
+            <label className={labelClass}>Password</label>
             <input
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               type="password"
               placeholder="Enter password"
-              className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass}
             />
           </div>
 
-          {/* Role */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Role</label>
+            <label className={labelClass}>Role</label>
             <select
               value={form.role}
               onChange={e => setForm({ ...form, role: e.target.value })}
-              className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass}
             >
-              <option value="USER">User</option>
-              <option value="PROVIDER">Provider</option>
+              <option className="bg-ink-800" value="USER">User</option>
+              <option className="bg-ink-800" value="PROVIDER">Provider</option>
             </select>
           </div>
 
-          {/* Other fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+          <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2">
             <input
               placeholder="Address"
               value={form.address}
               onChange={e => setForm({ ...form, address: e.target.value })}
-              className="border p-2 rounded-lg"
+              className={inputClass}
             />
             <input
               placeholder="District"
               value={form.district}
               onChange={e => setForm({ ...form, district: e.target.value })}
-              className="border p-2 rounded-lg"
+              className={inputClass}
             />
             <input
               placeholder="Phone No"
               value={form.phoneNo}
               onChange={e => setForm({ ...form, phoneNo: e.target.value })}
-              className="border p-2 rounded-lg"
+              className={inputClass}
               type="tel"
             />
             <input
               placeholder="Pincode"
               value={form.pincode}
               onChange={e => setForm({ ...form, pincode: e.target.value })}
-              className="border p-2 rounded-lg"
+              className={inputClass}
             />
             {form.role === 'PROVIDER' && (
               <>
@@ -159,20 +160,20 @@ export default function Register() {
                   placeholder="Service Name (e.g. Electrician)"
                   value={form.serviceName}
                   onChange={e => setForm({ ...form, serviceName: e.target.value })}
-                  className="border p-2 rounded-lg"
+                  className={inputClass}
                   required
                 />
                 <input
                   placeholder="Service Type (optional)"
                   value={form.serviceType}
                   onChange={e => setForm({ ...form, serviceType: e.target.value })}
-                  className="border p-2 rounded-lg"
+                  className={inputClass}
                 />
                 <input
                   placeholder="Pricing per hour (INR)"
                   value={form.pricingPerHour}
                   onChange={e => setForm({ ...form, pricingPerHour: e.target.value })}
-                  className="border p-2 rounded-lg"
+                  className={inputClass}
                   type="number"
                   step="0.01"
                   required
@@ -180,23 +181,24 @@ export default function Register() {
                 <select
                   value={form.serviceStatus}
                   onChange={e => setForm({ ...form, serviceStatus: e.target.value })}
-                  className="border p-2 rounded-lg"
+                  className={inputClass}
                 >
-                  <option value="AVAILABLE">Available</option>
-                  <option value="NOT_AVAILABLE">Not available</option>
+                  <option className="bg-ink-800" value="AVAILABLE">Available</option>
+                  <option className="bg-ink-800" value="NOT_AVAILABLE">Not available</option>
                 </select>
                 <input
                   placeholder="State"
                   value={form.state}
                   onChange={e => setForm({ ...form, state: e.target.value })}
-                  className="border p-2 rounded-lg"
+                  className={inputClass}
                   required
                 />
                 <textarea
                   placeholder="Short service description"
                   value={form.serviceDescription}
                   onChange={e => setForm({ ...form, serviceDescription: e.target.value })}
-                  className="border p-2 rounded-lg col-span-1 md:col-span-2"
+                  className={`${inputClass} col-span-1 md:col-span-2`}
+                  rows={3}
                 />
               </>
             )}
@@ -204,19 +206,21 @@ export default function Register() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-all duration-300 mt-4"
+            disabled={submitting}
+            className="btn-primary mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           >
-            Register
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+            {submitting ? 'Creating account…' : 'Register'}
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-4">
+        <p className="mt-6 text-center text-sm text-gray-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-700 font-semibold hover:underline">
+          <Link to="/login" className="font-semibold text-primary-500 hover:text-primary-400">
             Login
           </Link>
         </p>
-      </div>
+      </Reveal>
     </div>
   )
 }

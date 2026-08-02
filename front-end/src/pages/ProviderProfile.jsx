@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/api'
 import { toast } from 'react-toastify'
+import { Star, Lock, Edit3 } from 'lucide-react'
+
+const inputClass = 'input-glass w-full rounded-xl px-3.5 py-2.5 text-sm mt-1'
 
 export default function ProviderProfile() {
   const { user, login, normalizeAndLogin } = useAuth()
@@ -38,7 +41,6 @@ export default function ProviderProfile() {
       .get('/api/services', { params: { providerId: user.id } })
       .then(r => setServices(Array.isArray(r.data) ? r.data : (r.data.value || [])))
       .catch(() => setServices([]))
-    // load rating and reviews for this provider
     api.get(`/api/providers/${user.id}/rating`).then(r => setRating(r.data)).catch(() => setRating({ average: 0, count: 0 }))
     api.get(`/api/providers/${user.id}/reviews`).then(r => setReviews(Array.isArray(r.data) ? r.data : [])).catch(() => setReviews([]))
   }, [user])
@@ -75,62 +77,47 @@ export default function ProviderProfile() {
 
   if (!user)
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <h2 className="text-3xl font-bold mb-3">Provider Profile</h2>
-        <p className="text-gray-600">You must be logged in to view your profile.</p>
+      <div className="app-bg flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 text-center">
+        <h2 className="mb-3 font-display text-3xl font-bold text-white">Provider Profile</h2>
+        <p className="text-gray-400">You must be logged in to view your profile.</p>
       </div>
     )
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6">
-      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-2xl p-8">
-        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">My Provider Profile</h2>
+    <div className="app-bg min-h-[calc(100vh-4rem)] px-4 py-10">
+      <div className="glass-strong mx-auto max-w-4xl rounded-2xl p-6 shadow-glow md:p-8">
+        <h2 className="text-center font-display text-3xl font-bold text-white">My Provider Profile</h2>
 
         {/* PASSWORD FORM */}
-        <div className="flex justify-end mb-3">
+        <div className="mt-4 flex justify-end">
           <button
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="btn-primary btn-ripple flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition-transform duration-300 hover:-translate-y-0.5"
             onClick={() => setShowPasswordForm(s => !s)}
           >
-            {showPasswordForm ? 'Hide Password Form' : 'Change Password'}
+            <Lock className="h-4 w-4" /> {showPasswordForm ? 'Hide Password Form' : 'Change Password'}
           </button>
         </div>
 
         {showPasswordForm && (
-          <div className="border rounded-xl p-5 bg-gray-50 mb-6">
-            <h3 className="text-lg font-semibold mb-3">Change Password</h3>
+          <div className="glass mb-6 mt-3 rounded-2xl p-5">
+            <h3 className="mb-3 font-display text-lg font-semibold text-white">Change Password</h3>
             <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="text-sm font-medium">Old Password</label>
-                <input
-                  type="password"
-                  className="border rounded w-full p-2 mt-1"
-                  value={oldPassword}
-                  onChange={e => setOldPassword(e.target.value)}
-                />
+                <label className="text-sm font-medium text-gray-300">Old Password</label>
+                <input type="password" className={inputClass} value={oldPassword} onChange={e => setOldPassword(e.target.value)} />
               </div>
               <div>
-                <label className="text-sm font-medium">New Password</label>
-                <input
-                  type="password"
-                  className="border rounded w-full p-2 mt-1"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                />
+                <label className="text-sm font-medium text-gray-300">New Password</label>
+                <input type="password" className={inputClass} value={newPassword} onChange={e => setNewPassword(e.target.value)} />
               </div>
               <div>
-                <label className="text-sm font-medium">Confirm Password</label>
-                <input
-                  type="password"
-                  className="border rounded w-full p-2 mt-1"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                />
+                <label className="text-sm font-medium text-gray-300">Confirm Password</label>
+                <input type="password" className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
               </div>
             </div>
             <div className="mt-4 flex gap-2">
               <button
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="btn-primary btn-ripple rounded-xl px-4 py-2 text-sm font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5"
                 onClick={async () => {
                   if (!oldPassword || !newPassword) return toast.error('Please fill all fields')
                   if (newPassword !== confirmPassword) return toast.error('Passwords do not match')
@@ -148,10 +135,7 @@ export default function ProviderProfile() {
               >
                 Change Password
               </button>
-              <button
-                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-                onClick={() => setShowPasswordForm(false)}
-              >
+              <button className="btn-secondary rounded-xl px-4 py-2 text-sm font-medium text-gray-200" onClick={() => setShowPasswordForm(false)}>
                 Cancel
               </button>
             </div>
@@ -161,7 +145,7 @@ export default function ProviderProfile() {
         {/* PROFILE DETAILS */}
         {!editing ? (
           <div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <ProfileField label="Name" value={user.name} />
               <ProfileField label="Email" value={user.email} />
               <ProfileField label="Phone" value={user.phone ?? '—'} />
@@ -183,21 +167,21 @@ export default function ProviderProfile() {
                   })
                   setEditing(true)
                 }}
-                className="bg-yellow-400 hover:bg-yellow-500 text-white font-medium px-5 py-2 rounded-lg"
+                className="btn-accent btn-ripple inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-ink-900 transition-transform duration-300 hover:-translate-y-0.5"
               >
-                Edit Profile
+                <Edit3 className="h-4 w-4" /> Edit Profile
               </button>
             </div>
 
             {/* SERVICES LIST */}
             <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-3">My Services</h3>
+              <h3 className="mb-3 font-display text-xl font-semibold text-white">My Services</h3>
               {services.length === 0 ? (
-                <p className="text-gray-500 text-center py-4 border rounded-lg">No services yet.</p>
+                <p className="glass rounded-2xl py-4 text-center text-gray-400">No services yet.</p>
               ) : (
                 <div className="space-y-4">
                   {services.map(s => (
-                    <div key={s.id} className="border rounded-xl p-4 bg-gray-50 shadow-sm">
+                    <div key={s.id} className="glass rounded-2xl p-4 shadow-card">
                       <ServiceItem
                         service={s}
                         onUpdated={updated =>
@@ -209,39 +193,41 @@ export default function ProviderProfile() {
                 </div>
               )}
             </div>
+
             {/* REVIEWS & RATING */}
             <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-3">Ratings & Reviews</h3>
-              <div className="mb-4">
-                <div className="text-lg font-medium">Average Rating: {rating.average ?? 0} ({rating.count ?? 0} reviews)
-                  <div className="inline-block ml-3 align-middle">{
-                    Array.from({length: 5}).map((_,i) => (
-                      <span key={i} className={`text-sm ${i < Math.round(rating.average) ? 'text-yellow-500' : 'text-gray-300'}`}>★</span>
-                    ))
-                  }</div>
+              <h3 className="mb-3 font-display text-xl font-semibold text-white">Ratings &amp; Reviews</h3>
+              <div className="mb-4 flex items-center gap-3 text-gray-300">
+                <span className="text-lg font-medium text-white">Average Rating: {rating.average ?? 0}</span>
+                <span className="text-sm text-gray-400">({rating.count ?? 0} reviews)</span>
+                <div className="flex">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={`h-4 w-4 ${i < Math.round(rating.average) ? 'fill-accent-400 text-accent-400' : 'text-gray-600'}`} />
+                  ))}
                 </div>
               </div>
 
               {/* Review submission: only allow non-provider users to submit */}
               {user && user.role !== 'PROVIDER' && (
-                <div className="border rounded-lg p-4 mb-4 bg-gray-50">
-                  <h4 className="font-medium mb-2">Leave a review</h4>
-                  <div className="flex items-center gap-2 mb-2">
-                    <label className="text-sm">Rating:</label>
-                    <div>
-                      { [5,4,3,2,1].map(v => (
-                        <button key={v} onClick={() => setNewRating(v)} className={`text-lg ${v <= newRating ? 'text-yellow-500' : 'text-gray-300'} px-1`}>{'★'}</button>
-                      )) }
+                <div className="glass mb-4 rounded-2xl p-4">
+                  <h4 className="mb-2 font-medium text-white">Leave a review</h4>
+                  <div className="mb-2 flex items-center gap-2">
+                    <label className="text-sm text-gray-300">Rating:</label>
+                    <div className="flex">
+                      {[5, 4, 3, 2, 1].map(v => (
+                        <button key={v} onClick={() => setNewRating(v)} className="px-0.5">
+                          <Star className={`h-5 w-5 ${v <= newRating ? 'fill-accent-400 text-accent-400' : 'text-gray-600'}`} />
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Write your review" className="w-full border rounded p-2 mb-2" />
-                  <div className="flex gap-2">
+                  <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Write your review" className="input-glass w-full rounded-xl px-3.5 py-2.5 text-sm" rows={3} />
+                  <div className="mt-3 flex gap-2">
                     <button onClick={async () => {
                       if (!user || !user.id) return toast.error('Please login to submit a review')
                       try {
                         await api.post(`/api/providers/${user.id}/reviews`, { userId: user.id, rating: newRating, comment: newComment })
                         toast.success('Review submitted')
-                        // reload reviews and rating
                         const r1 = await api.get(`/api/providers/${user.id}/reviews`)
                         setReviews(Array.isArray(r1.data) ? r1.data : [])
                         const r2 = await api.get(`/api/providers/${user.id}/rating`)
@@ -251,24 +237,24 @@ export default function ProviderProfile() {
                       } catch (e) {
                         toast.error(e.response?.data?.error || 'Failed to submit review')
                       }
-                    }} className="bg-blue-600 text-white px-3 py-1 rounded">Submit Review</button>
-                    <button onClick={() => { setNewComment(''); setNewRating(5) }} className="bg-gray-200 px-3 py-1 rounded">Cancel</button>
+                    }} className="btn-primary btn-ripple rounded-xl px-4 py-2 text-sm font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5">Submit Review</button>
+                    <button onClick={() => { setNewComment(''); setNewRating(5) }} className="btn-secondary rounded-xl px-4 py-2 text-sm font-medium text-gray-200">Cancel</button>
                   </div>
                 </div>
               )}
 
               <div className="space-y-3">
                 {reviews.length === 0 ? (
-                  <p className="text-gray-500">No reviews yet.</p>
+                  <p className="text-gray-400">No reviews yet.</p>
                 ) : (
                   reviews.map(r => (
-                    <div key={r.id} className="border rounded p-3 bg-white">
-                      <div className="flex justify-between items-center mb-1">
-                        <div className="font-medium">{r.user?.name}</div>
-                        <div className="text-sm text-gray-600">{r.rating} ★</div>
+                    <div key={r.id} className="glass rounded-2xl p-4">
+                      <div className="mb-1 flex items-center justify-between">
+                        <div className="font-medium text-white">{r.user?.name}</div>
+                        <div className="flex items-center gap-1 text-sm text-gray-300">{r.rating} <Star className="h-3.5 w-3.5 fill-accent-400 text-accent-400" /></div>
                       </div>
-                      <div className="text-sm text-gray-700 mb-1">{r.comment}</div>
-                      <div className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString()}</div>
+                      <div className="mb-1 text-sm text-gray-300">{r.comment}</div>
+                      <div className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleString()}</div>
                     </div>
                   ))
                 )}
@@ -293,9 +279,9 @@ export default function ProviderProfile() {
 
 function ProfileField({ label, value }) {
   return (
-    <div className="p-3 bg-gray-50 rounded-lg shadow-sm">
-      <div className="text-sm text-gray-500">{label}</div>
-      <div className="font-medium text-gray-800">{value}</div>
+    <div className="glass rounded-xl p-3">
+      <div className="text-sm text-gray-400">{label}</div>
+      <div className="font-medium text-white">{value}</div>
     </div>
   )
 }
@@ -305,27 +291,27 @@ function EditProfileForm({ draft, setDraft, save, saving, cancel, role }) {
     <div className="grid grid-cols-1 gap-3">
       {['name', 'email', 'phone', 'address', 'district', 'pincode'].map(field => (
         <div key={field}>
-          <label className="text-sm font-medium capitalize">{field}</label>
+          <label className="text-sm font-medium capitalize text-gray-300">{field}</label>
           <input
-            className="border rounded w-full p-2 mt-1"
+            className={inputClass}
             value={draft[field]}
             onChange={e => setDraft(d => ({ ...d, [field]: e.target.value }))}
           />
         </div>
       ))}
       <div>
-        <label className="text-sm font-medium">Role</label>
-        <input className="border rounded w-full p-2 bg-gray-100 mt-1" value={role} disabled />
+        <label className="text-sm font-medium text-gray-300">Role</label>
+        <input className={`${inputClass} opacity-60`} value={role} disabled />
       </div>
-      <div className="flex justify-end mt-4 gap-3">
+      <div className="mt-4 flex justify-end gap-3">
         <button
           onClick={() => save(draft)}
           disabled={saving}
-          className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700"
+          className="btn-primary btn-ripple rounded-xl px-5 py-2 text-sm font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 disabled:opacity-60"
         >
           {saving ? 'Saving...' : 'Save'}
         </button>
-        <button onClick={cancel} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
+        <button onClick={cancel} className="btn-secondary rounded-xl px-5 py-2 text-sm font-medium text-gray-200">
           Cancel
         </button>
       </div>
@@ -354,15 +340,15 @@ function ServiceItem({ service, onUpdated }) {
 
   return (
     <div>
-      <div className="text-lg font-semibold mb-1">{service.serviceName}</div>
+      <div className="mb-1 font-display text-lg font-semibold text-white">{service.serviceName}</div>
       {!editing ? (
-        <div className="space-y-1 text-sm text-gray-700">
+        <div className="space-y-1 text-sm text-gray-300">
           <p>{service.description}</p>
-          <p>Pricing: ₹{service.pricingPerHour}</p>
+          <p>Pricing: &#8377;{service.pricingPerHour}</p>
           <p>Status: {service.status}</p>
           <button
             onClick={() => setEditing(true)}
-            className="text-blue-600 hover:underline text-sm mt-2"
+            className="mt-2 text-sm font-medium text-primary-500 hover:text-primary-400"
           >
             Edit Service
           </button>
@@ -370,38 +356,23 @@ function ServiceItem({ service, onUpdated }) {
       ) : (
         <div className="space-y-2">
           <div>
-            <label className="text-sm font-medium">Description</label>
-            <input
-              className="border rounded w-full p-1 mt-1"
-              value={draft.description}
-              onChange={e => setDraft(d => ({ ...d, description: e.target.value }))}
-            />
+            <label className="text-sm font-medium text-gray-300">Description</label>
+            <input className={inputClass} value={draft.description} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} />
           </div>
           <div>
-            <label className="text-sm font-medium">Pricing per hour (₹)</label>
-            <input
-              className="border rounded w-full p-1 mt-1"
-              value={draft.pricingPerHour}
-              onChange={e => setDraft(d => ({ ...d, pricingPerHour: e.target.value }))}
-            />
+            <label className="text-sm font-medium text-gray-300">Pricing per hour (&#8377;)</label>
+            <input className={inputClass} value={draft.pricingPerHour} onChange={e => setDraft(d => ({ ...d, pricingPerHour: e.target.value }))} />
           </div>
           <div>
-            <label className="text-sm font-medium">Status</label>
-            <select
-              className="border rounded w-full p-1 mt-1"
-              value={draft.status}
-              onChange={e => setDraft(d => ({ ...d, status: e.target.value }))}
-            >
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="INACTIVE">INACTIVE</option>
-              <option value="PENDING">PENDING</option>
+            <label className="text-sm font-medium text-gray-300">Status</label>
+            <select className={inputClass} value={draft.status} onChange={e => setDraft(d => ({ ...d, status: e.target.value }))}>
+              <option className="bg-ink-800" value="ACTIVE">ACTIVE</option>
+              <option className="bg-ink-800" value="INACTIVE">INACTIVE</option>
+              <option className="bg-ink-800" value="PENDING">PENDING</option>
             </select>
           </div>
-          <div className="flex gap-2 mt-2">
-            <button
-              onClick={save}
-              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-            >
+          <div className="mt-2 flex gap-2">
+            <button onClick={save} className="btn-primary btn-ripple rounded-xl px-3 py-1.5 text-sm font-medium text-white transition-transform duration-300 hover:-translate-y-0.5">
               Save
             </button>
             <button
@@ -413,7 +384,7 @@ function ServiceItem({ service, onUpdated }) {
                   status: service.status ?? ''
                 })
               }}
-              className="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+              className="btn-secondary rounded-xl px-3 py-1.5 text-sm font-medium text-gray-200"
             >
               Cancel
             </button>

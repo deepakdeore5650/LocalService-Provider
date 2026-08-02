@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/providers")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ReviewController {
 
     private final ReviewRepository reviewRepository;

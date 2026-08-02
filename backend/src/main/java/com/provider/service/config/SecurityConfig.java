@@ -19,8 +19,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Development-friendly configuration: allow all requests so login/registration
-        // can work without a full authentication mechanism. Change before production.
         http
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())

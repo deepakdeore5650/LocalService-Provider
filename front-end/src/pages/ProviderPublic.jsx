@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/api'
 import { toast } from 'react-toastify'
 import BookingForm from '../components/BookingForm'
+import { Star, IndianRupee } from 'lucide-react'
 
 export default function ProviderPublic() {
   const { id } = useParams()
@@ -29,7 +30,7 @@ export default function ProviderPublic() {
     try {
       const url = `/api/providers/${id}/reviews`
       const payload = { userId: user.id, rating: newRating, comment: newComment }
-      const resp = await api.post(url, payload)
+      await api.post(url, payload)
       toast.success('Review submitted')
       const r1 = await api.get(`/api/providers/${id}/reviews`)
       setReviews(Array.isArray(r1.data) ? r1.data : [])
@@ -40,86 +41,100 @@ export default function ProviderPublic() {
     } catch (e) {
       const status = e.response?.status
       const serverMsg = e.response?.data?.error || e.response?.data || e.message
-      if (status) {
-        toast.error(`Review failed (${status}): ${String(serverMsg)}`)
-      } else {
-        toast.error(String(serverMsg || 'Failed to submit review'))
-      }
+      if (status) toast.error(`Review failed (${status}): ${String(serverMsg)}`)
+      else toast.error(String(serverMsg || 'Failed to submit review'))
     }
   }
 
-  if (!provider) return <div className="container mx-auto p-4">Provider not found</div>
+  if (!provider) return <div className="app-bg min-h-[calc(100vh-4rem)] p-8 text-center text-gray-400">Provider not found</div>
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-2">{provider.name}</h2>
-        <div className="text-sm text-gray-600 mb-4">{provider.email} • {provider.pincode}</div>
-        <div className="mb-4">Average Rating: {rating.average ?? 0} ({rating.count ?? 0} reviews)
-          <div className="inline-block ml-3 align-middle">{
-            Array.from({length: 5}).map((_,i) => (
-              <span key={i} className={`text-sm ${i < Math.round(rating.average) ? 'text-yellow-500' : 'text-gray-300'}`}>★</span>
-            ))
-          }</div>
+    <div className="app-bg min-h-[calc(100vh-4rem)] px-4 py-10">
+      <div className="glass-strong mx-auto max-w-4xl rounded-2xl p-6 shadow-glow md:p-8">
+        <h2 className="font-display text-2xl font-bold text-white">{provider.name}</h2>
+        <div className="mt-1 text-sm text-gray-400">{provider.email} &bull; {provider.pincode}</div>
+        <div className="mt-3 flex items-center gap-3 text-sm text-gray-300">
+          Average Rating: {rating.average ?? 0} ({rating.count ?? 0} reviews)
+          <div className="flex">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className={`h-4 w-4 ${i < Math.round(rating.average) ? 'fill-accent-400 text-accent-400' : 'text-gray-600'}`} />
+            ))}
+          </div>
         </div>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Services</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {services.length === 0 ? <div className="text-gray-500">No services</div> : services.map(s => (
-            <div key={s.id} className="border rounded p-3 bg-gray-50">
-              <div className="font-medium">{s.serviceName}</div>
-              <div className="text-sm text-gray-700">{s.description}</div>
-              <div className="text-sm mt-1">Price/hr: ₹{s.pricingPerHour}</div>
+        <h3 className="mt-6 font-display text-lg font-semibold text-white">Services</h3>
+        <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+          {services.length === 0 ? (
+            <div className="text-gray-400">No services</div>
+          ) : services.map(s => (
+            <div key={s.id} className="glass rounded-2xl p-4 shadow-card">
+              <div className="font-medium text-white">{s.serviceName}</div>
+              <div className="mt-1 text-sm text-gray-400">{s.description}</div>
+              <div className="mt-2 flex items-center gap-1 text-sm text-accent-400">
+                <IndianRupee className="h-3.5 w-3.5" /> {s.pricingPerHour}/hr
+              </div>
               <div className="mt-2">
                 {user && user.role !== 'PROVIDER' ? (
-                  <BookingForm service={s} onBooked={(b) => { toast.success('Booked successfully'); }} />
+                  <BookingForm service={s} onBooked={() => toast.success('Booked successfully')} />
                 ) : (
-                  <div className="text-sm text-gray-500 mt-2">Login as a user to book this service.</div>
+                  <div className="mt-2 text-sm text-gray-500">Login as a user to book this service.</div>
                 )}
               </div>
             </div>
           ))}
         </div>
 
-        <h3 className="text-lg font-semibold mt-6 mb-2">Reviews</h3>
+        <h3 className="mt-8 font-display text-lg font-semibold text-white">Reviews</h3>
 
         {user && user.role !== 'PROVIDER' && (
-          <div className="border rounded p-3 mb-4 bg-gray-50">
-            <div className="flex items-center gap-2 mb-2">
-              <label className="font-medium">Your Rating:</label>
-              <div>
-                { [5,4,3,2,1].map(v => (
-                  <button key={v} type="button" onClick={() => setNewRating(v)} className={`text-lg ${v <= newRating ? 'text-yellow-500' : 'text-gray-300'} px-1`}>{'★'}</button>
-                )) }
+          <div className="glass mt-3 rounded-2xl p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-300">Your Rating:</label>
+              <div className="flex">
+                {[5, 4, 3, 2, 1].map(v => (
+                  <button key={v} type="button" onClick={() => setNewRating(v)} className="px-0.5">
+                    <Star className={`h-5 w-5 ${v <= newRating ? 'fill-accent-400 text-accent-400' : 'text-gray-600'}`} />
+                  </button>
+                ))}
               </div>
             </div>
-            <textarea value={newComment} onChange={e => setNewComment(e.target.value)} className="w-full border rounded p-2 mb-2" placeholder="Write your review (optional)" />
-            <div className="flex gap-2">
-              <button onClick={async () => {
-                if (submittingReview) return
-                setSubmittingReview(true)
-                try {
-                  await submitReview()
-                } finally {
-                  setSubmittingReview(false)
-                }
-              }} className="bg-blue-600 text-white px-3 py-1 rounded" disabled={submittingReview}>
+            <textarea
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              className="input-glass w-full rounded-xl px-3.5 py-2.5 text-sm"
+              placeholder="Write your review (optional)"
+              rows={3}
+            />
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={async () => {
+                  if (submittingReview) return
+                  setSubmittingReview(true)
+                  try { await submitReview() } finally { setSubmittingReview(false) }
+                }}
+                disabled={submittingReview}
+                className="btn-primary btn-ripple rounded-xl px-4 py-2 text-sm font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 disabled:opacity-60"
+              >
                 {submittingReview ? 'Submitting...' : 'Submit Review'}
               </button>
-              <button onClick={() => { setNewComment(''); setNewRating(5) }} className="bg-gray-200 px-3 py-1 rounded">Cancel</button>
+              <button onClick={() => { setNewComment(''); setNewRating(5) }} className="btn-secondary rounded-xl px-4 py-2 text-sm font-medium text-gray-200">
+                Cancel
+              </button>
             </div>
           </div>
         )}
 
-        <div className="space-y-3">
-          {reviews.length === 0 ? <div className="text-gray-500">No reviews yet.</div> : reviews.map(r => (
-            <div key={r.id} className="border rounded p-3 bg-white">
-              <div className="flex justify-between items-center mb-1">
-                <div className="font-medium">{r.user?.name}</div>
-                <div className="text-sm text-gray-600">{r.rating} ★</div>
+        <div className="mt-4 space-y-3">
+          {reviews.length === 0 ? (
+            <div className="text-gray-400">No reviews yet.</div>
+          ) : reviews.map(r => (
+            <div key={r.id} className="glass rounded-2xl p-4">
+              <div className="mb-1 flex items-center justify-between">
+                <div className="font-medium text-white">{r.user?.name}</div>
+                <div className="flex items-center gap-1 text-sm text-accent-400">{r.rating} <Star className="h-3.5 w-3.5 fill-accent-400" /></div>
               </div>
-              <div className="text-sm text-gray-700 mb-1">{r.comment}</div>
-              <div className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString()}</div>
+              <div className="mb-1 text-sm text-gray-300">{r.comment}</div>
+              <div className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleString()}</div>
             </div>
           ))}
         </div>

@@ -1,0 +1,26 @@
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Java / backend
+target/
+.mvn/wrapper/
+*.class
+*.log
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

@@ -68,90 +68,89 @@ export default function UserDashboard() {
   }
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">My Bookings</h2>
-        <p className="text-gray-600 text-lg">
+      <div className="app-bg flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 text-center">
+        <h2 className="font-display text-3xl font-bold text-white">My Bookings</h2>
+        <p className="mt-4 text-lg text-gray-400">
           You must be logged in to see your bookings.{' '}
-          <a href="/login" className="text-blue-600 font-medium hover:underline">Login</a>
+          <a href="/login" className="font-medium text-primary-500 hover:text-primary-400">Login</a>
         </p>
       </div>
     )
   }
 
+  const statusBadge = (status) => {
+    if (status === 'COMPLETED') return 'bg-emerald-400/10 text-emerald-300'
+    if (status === 'PENDING') return 'bg-accent-500/10 text-accent-400'
+    return 'bg-primary-500/10 text-primary-400'
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6">
-      <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">My Bookings</h2>
+    <div className="app-bg min-h-[calc(100vh-4rem)] px-6 py-14">
+      <div className="mx-auto max-w-5xl">
+        <h2 className="text-center font-display text-3xl font-bold text-white">My Bookings</h2>
 
         {bookings.length === 0 ? (
-          <div className="text-center text-gray-600 bg-white py-12 rounded-2xl shadow-md">
-            <ClipboardList className="mx-auto mb-3 text-gray-400" size={40} />
+          <div className="glass mt-8 rounded-2xl py-12 text-center text-gray-400">
+            <ClipboardList className="mx-auto mb-3 text-gray-500" size={40} />
             <p className="text-lg">You have no bookings yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
             {bookings.map(b => (
               <div
                 key={b.id}
-                className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
+                className="glass rounded-2xl p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
               >
-                <div className="flex justify-between items-center mb-3">
-                  <div className="font-semibold text-lg text-gray-800">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="font-display text-lg font-semibold text-white">
                     {b.service?.serviceName}
                   </div>
-
-                  {b.status === 'AWAITING_PAYMENT' && (b.providerAmount || b.providerAmount === 0) && (
-                    <div className="mt-4">
-                      <button onClick={() => payBooking(b)} className="bg-blue-600 text-white px-4 py-2 rounded">
-                        Pay ₹{b.providerAmount}
-                      </button>
-                    </div>
-                  )}
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      b.status === 'COMPLETED'
-                        ? 'bg-green-100 text-green-700'
-                        : b.status === 'PENDING'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}
-                  >
+                  <span className={`rounded-full px-3 py-1 text-sm font-medium ${statusBadge(b.status)}`}>
                     {b.status}
                   </span>
                 </div>
 
-                <div className="text-gray-600 space-y-2">
+                {b.status === 'AWAITING_PAYMENT' && (b.providerAmount || b.providerAmount === 0) && (
+                  <button
+                    onClick={() => payBooking(b)}
+                    className="btn-accent btn-ripple mb-4 flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-ink-900 transition-transform duration-300 hover:-translate-y-0.5"
+                  >
+                    Pay &#8377;{b.providerAmount}
+                  </button>
+                )}
+
+                <div className="space-y-2 text-gray-300">
                   <div className="flex items-center gap-2">
-                    <User size={18} className="text-blue-500" />
+                    <User size={16} className="text-primary-500" />
                     <span>Provider: {b.service?.provider?.name ?? '—'}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <CalendarDays size={18} className="text-blue-500" />
+                    <CalendarDays size={16} className="text-primary-500" />
                     <span>{new Date(b.date).toLocaleString()}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <MapPin size={18} className="text-blue-500" />
+                    <MapPin size={16} className="text-primary-500" />
                     <span>{b.address}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <FileText size={18} className="text-blue-500" />
+                    <FileText size={16} className="text-primary-500" />
                     <span>Description: {b.service?.description ?? '—'}</span>
                   </div>
 
                   {b.providerNote && (
-                    <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mt-2">
-                      <p className="text-sm text-blue-800">
-                        <strong>Provider note:</strong> {b.providerNote}
+                    <div className="mt-2 rounded-xl border-l-4 border-primary-500 bg-primary-500/10 p-3">
+                      <p className="text-sm text-gray-200">
+                        <strong className="text-white">Provider note:</strong> {b.providerNote}
                       </p>
                     </div>
                   )}
                   {b.userNote && (
-                    <div className="bg-gray-50 border-l-4 border-gray-400 p-3 rounded mt-2">
-                      <p className="text-sm text-gray-800">
-                        <strong>Your note:</strong> {b.userNote}
+                    <div className="mt-2 rounded-xl border-l-4 border-white/20 bg-white/5 p-3">
+                      <p className="text-sm text-gray-200">
+                        <strong className="text-white">Your note:</strong> {b.userNote}
                       </p>
                     </div>
                   )}
