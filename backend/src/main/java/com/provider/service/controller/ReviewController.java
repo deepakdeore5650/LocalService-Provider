@@ -4,6 +4,7 @@ import com.provider.service.entity.ReviewEntity;
 import com.provider.service.entity.UserEntity;
 import com.provider.service.repository.ReviewRepository;
 import com.provider.service.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -47,6 +49,40 @@ public class ReviewController {
         }
     }
 
+    // Resolve the logged-in user's id, preferring the security context (when populated)
+    // and falling back to an explicitly supplied id, matching the pattern used elsewhere
+    // in this app (the app does not issue server-side sessions/JWTs today).
+    private Long resolveCurrentUserId(Long suppliedUserId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
+            UserEntity authUser = userRepository.findByEmail(auth.getName()).orElse(null);
+            if (authUser != null) return authUser.getId();
+        }
+        return suppliedUserId;
+    }
+
+    // Check whether the logged-in user has already reviewed this provider, and return
+    // their existing review if so. Used by the frontend to decide whether to show the
+    // review form or a "you already reviewed this provider" message.
+    @GetMapping("/{providerId}/reviews/me")
+    public ResponseEntity<?> getMyReview(@PathVariable Long providerId, @RequestParam(required = false) Long userId) {
+        try {
+            Long reviewerId = resolveCurrentUserId(userId);
+            if (reviewerId == null) {
+                return ResponseEntity.ok(Map.of("reviewed", false));
+            }
+            Optional<ReviewEntity> existing = reviewRepository.findByProvider_IdAndUser_Id(providerId, reviewerId);
+            if (existing.isEmpty()) {
+                return ResponseEntity.ok(Map.of("reviewed", false));
+            }
+            Map<String, Object> body = new java.util.HashMap<>(toDto(existing.get()));
+            body.put("reviewed", true);
+            return ResponseEntity.ok(body);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to check review status"));
+        }
+    }
+
     @GetMapping("/{providerId}/rating")
     public ResponseEntity<?> getRating(@PathVariable Long providerId) {
         try {
@@ -62,23 +98,21 @@ public class ReviewController {
     @PostMapping("/{providerId}/reviews")
     public ResponseEntity<?> addReview(@PathVariable Long providerId, @RequestBody Map<String, Object> payload) {
         try {
-
-            // Prefer the authenticated user when available
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             Long userIdFromPayload = payload.get("userId") == null ? null : Long.valueOf(String.valueOf(payload.get("userId")));
             Integer rating = payload.get("rating") == null ? null : Integer.valueOf(String.valueOf(payload.get("rating")));
             String comment = payload.get("comment") == null ? "" : String.valueOf(payload.get("comment"));
 
-            Long reviewerId = null;
-            if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
-                // auth name is email in our app; find user by email
-                UserEntity authUser = userRepository.findByEmail(auth.getName()).orElse(null);
-                if (authUser != null) reviewerId = authUser.getId();
-            }
-            if (reviewerId == null) reviewerId = userIdFromPayload; // fallback to payload
+            // Prefer the authenticated user when available; otherwise fall back to the
+            // supplied userId (this app does not yet issue server-side sessions/JWTs).
+            Long reviewerId = resolveCurrentUserId(userIdFromPayload);
 
             if (reviewerId == null || rating == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "userId (or authenticated user) and rating are required"));
+            }
+
+            // Rating must be strictly within 1-5; reject rather than silently clamp.
+            if (rating < 1 || rating > 5) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Rating must be between 1 and 5"));
             }
 
             UserEntity provider = userRepository.findById(providerId).orElse(null);
@@ -90,6 +124,9 @@ public class ReviewController {
             if (user == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
             }
+            if (reviewerId.equals(providerId)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "You cannot review yourself"));
+            }
 
             // Prevent duplicate reviews by same user for same provider
             if (reviewRepository.existsByProvider_IdAndUser_Id(providerId, reviewerId)) {
@@ -99,11 +136,15 @@ public class ReviewController {
             ReviewEntity r = new ReviewEntity();
             r.setProvider(provider);
             r.setUser(user);
-            r.setRating(Math.max(1, Math.min(5, rating)));
+            r.setRating(rating);
             r.setComment(comment);
 
             ReviewEntity saved = reviewRepository.save(r);
-            return ResponseEntity.ok(Map.of("id", saved.getId()));
+            return ResponseEntity.ok(toDto(saved));
+        } catch (DataIntegrityViolationException dup) {
+            // Backstop against race conditions: the DB-level unique constraint on
+            // (provider_id, user_id) rejects a second concurrent submission.
+            return ResponseEntity.badRequest().body(Map.of("error", "You have already reviewed this provider"));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to save review"));
         }

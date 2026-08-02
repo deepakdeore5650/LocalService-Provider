@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
     List<ReviewEntity> findByProvider_IdOrderByCreatedAtDesc(Long providerId);
@@ -17,4 +18,6 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
     Long countByProviderId(@Param("providerId") Long providerId);
 
     boolean existsByProvider_IdAndUser_Id(Long providerId, Long userId);
+
+    Optional<ReviewEntity> findByProvider_IdAndUser_Id(Long providerId, Long userId);
 }
