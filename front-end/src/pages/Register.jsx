@@ -123,6 +123,7 @@ export default function Register() {
               onChange={e => setForm({ ...form, role: e.target.value })}
               className={inputClass}
             >
+              <option className="bg-ink-800" value="ADMIN">Admin</option>
               <option className="bg-ink-800" value="USER">User</option>
               <option className="bg-ink-800" value="PROVIDER">Provider</option>
             </select>
