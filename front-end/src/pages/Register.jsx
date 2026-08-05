@@ -28,11 +28,13 @@ export default function Register() {
     state: ''
   })
   const [submitting, setSubmitting] = useState(false)
+  const [showOtp, setShowOtp] = useState(false)
+  const [otp, setOtp] = useState('')
 
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const submit = async (e) => {
+  const requestOtpOrRegister = async (e) => {
     e.preventDefault()
     const phoneRe = /^\d{10}$/
     const pinRe = /^\d{6}$/
@@ -47,9 +49,31 @@ export default function Register() {
       if (!form.state) { toast.error('State is required for providers'); return }
       if (!form.pricingPerHour) { toast.error('Pricing per hour is required for providers'); return }
     }
+
+    if (form.role === 'USER') {
+      await completeRegistration()
+      return
+    }
+
     setSubmitting(true)
     try {
-      const payload = { ...form }
+      await api.post('/api/otp/send-registration', { email: form.email, role: form.role, name: form.name })
+      toast.success('OTP sent successfully. Please check your email.')
+      setShowOtp(true)
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.response?.data || 'Failed to send OTP')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const completeRegistration = async (e) => {
+    if (e) e.preventDefault()
+    if (showOtp && !otp) { toast.error('OTP is required'); return }
+
+    setSubmitting(true)
+    try {
+      const payload = { ...form, otp }
       if (form.role !== 'PROVIDER') {
         delete payload.serviceName
         delete payload.serviceDescription
@@ -58,11 +82,17 @@ export default function Register() {
       }
       const res = await api.post('/api/users/register', payload)
       toast.success('Registered successfully!')
+      
+      if (res.data.role?.toUpperCase() === 'ADMIN') {
+        navigate('/login')
+        return
+      }
+
       login(res.data)
       if (res.data.role?.toUpperCase() === 'PROVIDER') navigate('/provider/dashboard')
       else navigate('/user/dashboard')
     } catch (err) {
-      toast.error(err.response?.data || 'Registration failed')
+      toast.error(err.response?.data?.message || err.response?.data || 'Registration failed')
     } finally {
       setSubmitting(false)
     }
@@ -83,9 +113,10 @@ export default function Register() {
         <h2 className="mt-5 text-center font-display text-2xl font-bold text-white">Create your account</h2>
         <p className="mt-2 text-center text-sm text-gray-400">Join Local Guardian as a homeowner or a service provider</p>
 
-        <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
-          <div>
-            <label className={labelClass}>Name</label>
+        {!showOtp ? (
+          <form onSubmit={requestOtpOrRegister} className="mt-8 space-y-4" noValidate>
+            <div>
+              <label className={labelClass}>Name</label>
             <input
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
@@ -205,15 +236,53 @@ export default function Register() {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="btn-primary mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-          >
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-            {submitting ? 'Creating account…' : 'Register'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="btn-primary mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {submitting ? 'Processing…' : (form.role === 'USER' ? 'Register' : 'Continue')}
+            </button>
+          </form>
+        ) : (
+          <div className="mt-8 space-y-4">
+            <div>
+              <label className={labelClass}>Enter OTP</label>
+              <input
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                placeholder="6-digit OTP"
+                className={inputClass}
+                maxLength={6}
+              />
+              <p className="mt-2 text-xs text-gray-400">
+                {form.role === 'ADMIN' 
+                  ? 'OTP sent to Admin (Deepak Deore) for approval.' 
+                  : `OTP sent to ${form.email}.`}
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowOtp(false)}
+                className="glass mt-4 flex w-1/3 items-center justify-center rounded-xl py-3 font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/10"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={completeRegistration}
+                disabled={submitting || !otp}
+                className="btn-primary mt-4 flex w-2/3 items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                {submitting ? 'Verifying…' : 'Complete Registration'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <p className="mt-6 text-center text-sm text-gray-400">
           Already have an account?{' '}

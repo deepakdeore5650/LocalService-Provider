@@ -17,6 +17,8 @@ public class UserRegistrationRequest {
     private String serviceDescription;
     private Double pricingPerHour;
     private String serviceStatus; // AVAILABLE or NOT_AVAILABLE
+    
+    private String otp;
 
     // getters and setters
     public String getName() { return name; }
@@ -47,4 +49,6 @@ public class UserRegistrationRequest {
     public void setPricingPerHour(Double pricingPerHour) { this.pricingPerHour = pricingPerHour; }
     public String getServiceStatus() { return serviceStatus; }
     public void setServiceStatus(String serviceStatus) { this.serviceStatus = serviceStatus; }
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
 }

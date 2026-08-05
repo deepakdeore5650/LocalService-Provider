@@ -2,6 +2,7 @@ package com.provider.service.dto;
 
 public class UserDto {
     private Long id;
+    private java.time.LocalDateTime createdDate;
     private String name;
     private String email;
     private String role;
@@ -13,10 +14,15 @@ public class UserDto {
     private String phoneNo;
     private String status;
     private String status1;
+    private String token;
 
     // getters and setters
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public java.time.LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(java.time.LocalDateTime createdDate) { this.createdDate = createdDate; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getEmail() { return email; }

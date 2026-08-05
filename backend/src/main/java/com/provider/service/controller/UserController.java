@@ -9,6 +9,8 @@ import com.provider.service.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.provider.service.service.OtpService;
+import com.provider.service.config.JwtUtil;
 
 import java.util.Optional;
 import java.util.Map;
@@ -20,11 +22,15 @@ public class UserController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ServiceRepository serviceRepository;
+    private final OtpService otpService;
+    private final JwtUtil jwtUtil;
 
-    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, ServiceRepository serviceRepository) {
+    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, ServiceRepository serviceRepository, OtpService otpService, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.serviceRepository = serviceRepository;
+        this.otpService = otpService;
+        this.jwtUtil = jwtUtil;
     }
 
     private UserDto toDto(UserEntity e) {
@@ -41,6 +47,7 @@ public class UserController {
         d.setPhoneNo(e.getPhoneNo());
         d.setStatus(e.getStatus());
         d.setStatus1(e.getStatus1());
+        d.setCreatedDate(e.getCreatedDate());
         return d;
     }
 
@@ -49,13 +56,25 @@ public class UserController {
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email already registered");
         }
+
+        String role = req.getRole() == null ? "USER" : req.getRole().toUpperCase();
+        if ("PROVIDER".equals(role)) {
+            if (req.getOtp() == null || !otpService.verifyOtp(req.getEmail(), req.getOtp(), "REGISTER")) {
+                return ResponseEntity.badRequest().body("Invalid or expired OTP");
+            }
+        } else if ("ADMIN".equals(role)) {
+            // Hardcoded admin email for verification
+            if (req.getOtp() == null || !otpService.verifyOtp("deepakdeore750@gmail.com", req.getOtp(), "REGISTER")) {
+                return ResponseEntity.badRequest().body("Invalid or expired OTP for Admin approval");
+            }
+        }
         UserEntity user = new UserEntity();
         user.setName(req.getName());
         user.setEmail(req.getEmail());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
-        user.setRole(req.getRole() == null ? "USER" : req.getRole());
-        user.setStatus("PROVIDER".equals(req.getRole()) ? "pending" : "active");
-        user.setStatus1("PROVIDER".equals(req.getRole()) ? "pending" : null);
+        user.setRole(role);
+        user.setStatus("PROVIDER".equals(role) ? "pending" : "active");
+        user.setStatus1("PROVIDER".equals(role) ? "pending" : null);
         user.setServiceType(req.getServiceType());
         user.setPincode(req.getPincode());
         user.setAddress(req.getAddress());
@@ -75,8 +94,11 @@ public class UserController {
             svc.setProvider(saved);
             serviceRepository.save(svc);
         }
-
-        return ResponseEntity.ok(toDto(saved));
+        UserDto responseDto = toDto(saved);
+        String token = jwtUtil.generateToken(saved.getEmail(), saved.getRole());
+        responseDto.setToken(token);
+        
+        return ResponseEntity.ok(responseDto);
     }
 
     @PostMapping("/login")
@@ -93,8 +115,11 @@ public class UserController {
         if ("USER".equals(user.getRole()) && "inactive".equals(user.getStatus())) {
             return ResponseEntity.status(403).body("Account has been deactivated");
         }
+        UserDto responseDto = toDto(user);
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        responseDto.setToken(token);
         
-        return ResponseEntity.ok(toDto(user));
+        return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping("/{id}")
