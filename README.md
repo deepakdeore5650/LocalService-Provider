@@ -1,4 +1,4 @@
-# LocalService-Provider 🛠️
+# LocalService-Provider🛠️
 
 LocalService-Provider is a full-stack application that connects users with nearby local service providers. The backend is a Spring Boot API and the frontend is a React + Vite app.
 
