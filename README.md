@@ -1,6 +1,6 @@
 # 🛠️ LocalService-Provider
 
-**A full-stack platform that connects users with trusted local service providers — powered by Spring Boot, React, Razorpay payments, and a Gemini-powered AI assistant.**
+**A full-stack platform that connects users with trusted local service providers — powered by Spring Boot, React, Razorpay payments, and a Gemini-powered AI assistant.** 
 
 <p align="center">
   <img alt="Java" src="https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white">
