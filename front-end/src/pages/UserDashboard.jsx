@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react'
 import api from '../api/api'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { CalendarDays, MapPin, ClipboardList, User, FileText } from 'lucide-react'
 
 export default function UserDashboard() {
   const [bookings, setBookings] = useState([])
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
+    // Verify user has USER role - should be protected by ProtectedRoute, but extra safety
+    if (user && user.role !== 'USER') {
+      navigate('/')
+      return
+    }
+    
     if (!user) return
     api.get('/api/bookings', { params: { userId: user.id } })
       .then(r => {
@@ -15,7 +23,7 @@ export default function UserDashboard() {
       })
       .catch(e => {
       })
-  }, [user])
+  }, [user, navigate])
 
   const loadRazorpayScript = () => {
     return new Promise((resolve, reject) => {

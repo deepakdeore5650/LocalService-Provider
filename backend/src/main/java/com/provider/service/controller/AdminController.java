@@ -7,6 +7,7 @@ import com.provider.service.repository.UserRepository;
 import com.provider.service.repository.BookingRepository;
 import com.provider.service.service.OtpService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class AdminController {
         return d;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/providers/pending")
     public ResponseEntity<?> getPendingProviders() {
         try {
@@ -57,6 +59,7 @@ public class AdminController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/providers/{id}/verify")
     public ResponseEntity<?> verifyProvider(@PathVariable Long id) {
         try {
@@ -80,6 +83,7 @@ public class AdminController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/users/{id}/status")
     public ResponseEntity<?> updateUserStatus(
             @PathVariable Long id,
@@ -105,6 +109,7 @@ public class AdminController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/users/{id}/status1")
     public ResponseEntity<?> updateUserStatus1(
             @PathVariable Long id,
@@ -130,6 +135,7 @@ public class AdminController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers() {
         try {
@@ -143,6 +149,7 @@ public class AdminController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/bookings")
     public ResponseEntity<?> getAllBookings() {
         try {
@@ -153,6 +160,7 @@ public class AdminController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admins/{id}")
     public ResponseEntity<?> deleteAdmin(@PathVariable Long id, @RequestParam String otp) {
         try {

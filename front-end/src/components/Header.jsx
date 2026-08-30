@@ -11,14 +11,15 @@ const navItems = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin, isProvider, isUser } = useAuth()
   const navigate = useNavigate()
 
-  const dashboardPath = user?.role === 'ADMIN'
-    ? '/admin/dashboard'
-    : user?.role === 'PROVIDER'
-      ? '/provider/dashboard'
-      : '/user/dashboard'
+  const getDashboardPath = () => {
+    if (isAdmin()) return '/admin/dashboard'
+    if (isProvider()) return '/provider/dashboard'
+    if (isUser()) return '/user/dashboard'
+    return '/'
+  }
 
   const handleLogout = () => {
     logout()
@@ -50,9 +51,9 @@ export default function Header() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
-              <Link to={dashboardPath} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10">
+              <Link to={getDashboardPath()} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10">
                 <UserCircle className="h-4 w-4" />
-                {user.name || 'Profile'}
+                {user.name || 'Dashboard'}
               </Link>
               <button
                 type="button"
@@ -101,7 +102,7 @@ export default function Header() {
 
             {user ? (
               <>
-                <Link to={dashboardPath} onClick={() => setMenuOpen(false)} className="text-sm text-gray-200">
+                <Link to={getDashboardPath()} onClick={() => setMenuOpen(false)} className="text-sm text-gray-200">
                   Dashboard
                 </Link>
                 <button type="button" onClick={handleLogout} className="text-left text-sm text-gray-200">
