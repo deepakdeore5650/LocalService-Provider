@@ -51,8 +51,14 @@ export default function ProviderPublic() {
       ])
       setRating(ratingRes.data || { average: 0, count: 0 })
       setReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : [])
-    } catch {
-      setReviewsError('Failed to load reviews. Please try again.')
+    } catch (err) {
+      // Differentiate between auth errors and other failures
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        // Auth error - for these public endpoints, it indicates a configuration issue
+        setReviewsError('Unable to load reviews. Please refresh the page.')
+      } else {
+        setReviewsError('Failed to load reviews. Please try again.')
+      }
     } finally {
       setReviewsLoading(false)
     }

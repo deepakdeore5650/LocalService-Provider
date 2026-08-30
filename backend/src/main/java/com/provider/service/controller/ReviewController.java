@@ -67,9 +67,15 @@ public class ReviewController {
     @GetMapping("/{providerId}/reviews/me")
     public ResponseEntity<?> getMyReview(@PathVariable Long providerId, @RequestParam(required = false) Long userId) {
         try {
+            // Must be authenticated to check own review
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+                return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
+            }
+            
             Long reviewerId = resolveCurrentUserId(userId);
             if (reviewerId == null) {
-                return ResponseEntity.ok(Map.of("reviewed", false));
+                return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
             }
             Optional<ReviewEntity> existing = reviewRepository.findByProvider_IdAndUser_Id(providerId, reviewerId);
             if (existing.isEmpty()) {
@@ -98,16 +104,23 @@ public class ReviewController {
     @PostMapping("/{providerId}/reviews")
     public ResponseEntity<?> addReview(@PathVariable Long providerId, @RequestBody Map<String, Object> payload) {
         try {
-            Long userIdFromPayload = payload.get("userId") == null ? null : Long.valueOf(String.valueOf(payload.get("userId")));
+            // Require authentication - do NOT accept userId from frontend
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+                return ResponseEntity.status(401).body(Map.of("error", "Authentication required to submit a review"));
+            }
+            
+            Optional<UserEntity> authUserOpt = userRepository.findByEmail(auth.getName());
+            if (authUserOpt.isEmpty()) {
+                return ResponseEntity.status(401).body(Map.of("error", "Authentication required to submit a review"));
+            }
+            
+            Long reviewerId = authUserOpt.get().getId();
             Integer rating = payload.get("rating") == null ? null : Integer.valueOf(String.valueOf(payload.get("rating")));
             String comment = payload.get("comment") == null ? "" : String.valueOf(payload.get("comment"));
 
-            // Prefer the authenticated user when available; otherwise fall back to the
-            // supplied userId (this app does not yet issue server-side sessions/JWTs).
-            Long reviewerId = resolveCurrentUserId(userIdFromPayload);
-
-            if (reviewerId == null || rating == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "userId (or authenticated user) and rating are required"));
+            if (rating == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "rating is required"));
             }
 
             // Rating must be strictly within 1-5; reject rather than silently clamp.

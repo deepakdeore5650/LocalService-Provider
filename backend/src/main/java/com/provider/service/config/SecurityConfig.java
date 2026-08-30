@@ -43,12 +43,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Preflight CORS
                 .requestMatchers("/api/users/login", "/api/users/register").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll() // Allow public read access to user/provider details
+                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll() // Allow public read access to provider/user details
                 .requestMatchers("/api/otp/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
-                .requestMatchers("/api/chatbot/**").permitAll() // If Chatbot is public
-                .anyRequest().authenticated()
+                // Allow public GET access to provider reviews and ratings (LIST endpoints)
+                // POST/PUT/DELETE still require authentication (handled by anyRequest().authenticated())
+                .requestMatchers(HttpMethod.GET, "/api/providers/**").permitAll()
+                .requestMatchers("/api/chatbot/**").permitAll() // Chatbot is public
+                .anyRequest().authenticated() // Everything else requires authentication
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
