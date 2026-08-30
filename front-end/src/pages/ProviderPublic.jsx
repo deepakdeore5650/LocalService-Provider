@@ -96,7 +96,7 @@ export default function ProviderPublic() {
         if (err?.response?.status === 404) {
           setProviderError('Provider not found')
         } else {
-          setProviderError('Failed to load provider details. Please try again.')
+          setProviderError('Failed to load provider details')
         }
       })
       .finally(() => {
