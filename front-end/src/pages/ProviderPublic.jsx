@@ -22,6 +22,8 @@ export default function ProviderPublic() {
   const { user } = useAuth()
 
   const [provider, setProvider] = useState(null)
+  const [providerLoading, setProviderLoading] = useState(true)
+  const [providerError, setProviderError] = useState(null)
   const [services, setServices] = useState([])
 
   const [rating, setRating] = useState({ average: 0, count: 0 })
@@ -55,6 +57,7 @@ export default function ProviderPublic() {
       setReviewsLoading(false)
     }
   }, [id])
+<<<<<<< HEAD
 
   const loadMyReview = useCallback(async () => {
     if (!isCustomer) { setMyReview(null); return }
@@ -73,6 +76,74 @@ export default function ProviderPublic() {
     api.get(`/api/users/${id}`).then(r => setProvider(r.data)).catch(() => setProvider(null))
     api.get('/api/services', { params: { providerId: id } }).then(r => setServices(Array.isArray(r.data) ? r.data : [])).catch(() => setServices([]))
     loadReviewData()
+  }, [id, loadReviewData])
+
+  useEffect(() => {
+    loadMyReview()
+  }, [loadMyReview])
+=======
+>>>>>>> 002c3f1 (change if config)
+
+  const loadMyReview = useCallback(async () => {
+    if (!isCustomer) { setMyReview(null); return }
+    try {
+      const res = await api.get(`/api/providers/${id}/reviews/me`, { params: { userId: user.id } })
+      setMyReview(res.data && res.data.reviewed ? res.data : null)
+    } catch {
+      // If the check fails, fall back to allowing the form; the backend still enforces
+      // the one-review-per-user rule on submit.
+      setMyReview(null)
+    }
+  }, [id, isCustomer, user])
+
+  useEffect(() => {
+    if (!id) {
+      setProvider(null)
+      setProviderLoading(false)
+      setProviderError('Provider not found')
+      return
+    }
+
+    let isMounted = true
+
+    setProviderLoading(true)
+    setProviderError(null)
+
+    api.get(`/api/users/${id}`)
+      .then(r => {
+        if (!isMounted) return
+        const nextProvider = r?.data || null
+        setProvider(nextProvider)
+        setProviderError(nextProvider ? null : 'Provider not found')
+      })
+      .catch(err => {
+        if (!isMounted) return
+        setProvider(null)
+        if (err?.response?.status === 404) {
+          setProviderError('Provider not found')
+        } else {
+          setProviderError('Failed to load provider details. Please try again.')
+        }
+      })
+      .finally(() => {
+        if (isMounted) setProviderLoading(false)
+      })
+
+    api.get('/api/services', { params: { providerId: id } })
+      .then(r => {
+        if (!isMounted) return
+        setServices(Array.isArray(r.data) ? r.data : [])
+      })
+      .catch(() => {
+        if (!isMounted) return
+        setServices([])
+      })
+
+    loadReviewData()
+
+    return () => {
+      isMounted = false
+    }
   }, [id, loadReviewData])
 
   useEffect(() => {
@@ -102,7 +173,21 @@ export default function ProviderPublic() {
     }
   }
 
-  if (!provider) return <div className="app-bg min-h-[calc(100vh-4rem)] p-8 text-center text-gray-400">Provider not found</div>
+  if (providerLoading) {
+    return (
+      <div className="app-bg min-h-[calc(100vh-4rem)] p-8 text-center text-gray-400">
+        Loading provider details...
+      </div>
+    )
+  }
+
+  if (providerError) {
+    return <div className="app-bg min-h-[calc(100vh-4rem)] p-8 text-center text-gray-400">{providerError}</div>
+  }
+
+  if (!provider) {
+    return <div className="app-bg min-h-[calc(100vh-4rem)] p-8 text-center text-gray-400">Provider not found</div>
+  }
 
   return (
     <div className="app-bg min-h-[calc(100vh-4rem)] px-4 py-10">
