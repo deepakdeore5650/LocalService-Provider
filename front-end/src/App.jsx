@@ -24,7 +24,16 @@ function ScrollToTop() {
   const location = useLocation()
 
   useEffect(() => {
+    // Scroll to top immediately
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    
+    // Also schedule a scroll after a tiny delay to ensure DOM is fully painted
+    // This helps with pages that load content dynamically
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    }, 0)
+    
+    return () => clearTimeout(timer)
   }, [location.pathname])
 
   return null

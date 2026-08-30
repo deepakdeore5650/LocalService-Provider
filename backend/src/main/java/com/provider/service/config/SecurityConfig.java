@@ -43,6 +43,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Preflight CORS
                 .requestMatchers("/api/users/login", "/api/users/register").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll() // Allow public read access to user/provider details
                 .requestMatchers("/api/otp/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
