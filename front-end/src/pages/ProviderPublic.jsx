@@ -57,32 +57,6 @@ export default function ProviderPublic() {
       setReviewsLoading(false)
     }
   }, [id])
-<<<<<<< HEAD
-
-  const loadMyReview = useCallback(async () => {
-    if (!isCustomer) { setMyReview(null); return }
-    try {
-      const res = await api.get(`/api/providers/${id}/reviews/me`, { params: { userId: user.id } })
-      setMyReview(res.data && res.data.reviewed ? res.data : null)
-    } catch {
-      // If the check fails, fall back to allowing the form; the backend still enforces
-      // the one-review-per-user rule on submit.
-      setMyReview(null)
-    }
-  }, [id, isCustomer, user])
-
-  useEffect(() => {
-    if (!id) return
-    api.get(`/api/users/${id}`).then(r => setProvider(r.data)).catch(() => setProvider(null))
-    api.get('/api/services', { params: { providerId: id } }).then(r => setServices(Array.isArray(r.data) ? r.data : [])).catch(() => setServices([]))
-    loadReviewData()
-  }, [id, loadReviewData])
-
-  useEffect(() => {
-    loadMyReview()
-  }, [loadMyReview])
-=======
->>>>>>> 002c3f1 (change if config)
 
   const loadMyReview = useCallback(async () => {
     if (!isCustomer) { setMyReview(null); return }
